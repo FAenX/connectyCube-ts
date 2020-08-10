@@ -1,4 +1,3 @@
-// import ConnectyCube from 'connectycube';
 import axios from 'axios';
 import shortid from 'shortid';
 
@@ -18,9 +17,10 @@ const {
 const endPoints = {
   users: 'users',
   session: 'session',
+  login: 'login',
 };
 
-export class VideocallService {
+export class ConnectyCubeService {
   constructor(/* Add @inject to inject parameters */) {}
 
   private async connectyCubeSettings() {
@@ -42,7 +42,7 @@ export class VideocallService {
     const timestamp = Math.floor(Date.now() / 1000);
     const nonce = shortid.generate();
 
-    const params:any = {
+    const params = {
       'application_id': CB_APP_ID,
       'auth_key': CB_AUTH,
       nonce,
@@ -54,12 +54,12 @@ export class VideocallService {
       .update(querystring.stringify(params))
       .digest('hex');
 
-    // axios request
     const data = JSON.stringify({
       ...params,
       signature,
     });
 
+    // axios request
     const config = {headers: {
       'Content-Type': 'application/json',
     },
@@ -85,7 +85,7 @@ export class VideocallService {
     const {session} = res;
     const data = JSON.stringify({
       'user': {
-        'login': user.email,
+        'login': user.login,
         'password': user.password,
         'email': user.email,
         'facebook_id': user.facebookId,
@@ -114,14 +114,48 @@ export class VideocallService {
       throw new Error(response.data);
     });
   }
+
+  // login users
+  async login(user: Login) {
+    const res = await this.createSession();
+    const {session} = res;
+    const data = JSON.stringify({
+      'login': user.login,
+      'password': user.password,
+    });
+    const config = {headers:
+      {
+        'CB-Token': `${session.token}`,
+        'Content-Type': 'application/json',
+      },
+    };
+    const apiEndpoint = await this.apiEndpoint();
+    const response = axios.post(
+      `${apiEndpoint}/${endPoints.login}`,
+      data,
+      config,
+    );
+    return await response.then(res=>{
+      const response = res;
+      return response.data;
+    }).catch(res=>{
+      const response = res.response;
+      throw new Error(response.data);
+    });
+  }
 }
 
 interface User{
     password: string,
-    email: string,
+    login: string,
     facebookId?: string,
     twitterId?: string,
-    fullName: string,
-    phone: string,
+    fullName?: string,
+    phone?: string,
+    email?: string
 }
 
+interface Login{
+  login: string
+  password: string
+}
