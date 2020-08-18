@@ -1,12 +1,9 @@
-/* eslint-disable camelcase */
-import {bind, /* inject, */ BindingScope} from '@loopback/core';
 // import ConnectyCube from 'connectycube';
 import axios from 'axios';
 import shortid from 'shortid';
 
 import crypto from 'crypto';
 import moment from 'moment';
-import {HttpErrors, param} from '@loopback/rest';
 import querystring from 'querystring';
 
 const SETTINGS_URL = 'https://api.connectycube.com/account_settings';
@@ -45,7 +42,6 @@ function paramsWithUser(message:any) {
 
 //
 
-@bind({scope: BindingScope.TRANSIENT})
 export class ConnectCube {
   constructor(/* Add @inject to inject parameters */) {}
 
@@ -120,7 +116,7 @@ export class ConnectCube {
       return response.data;
     }).catch(res=>{
       const response = res.response;
-      throw new HttpErrors.BadRequest(response.data);
+      throw new Error(response.data);
     });
   }
 
@@ -156,7 +152,7 @@ export class ConnectCube {
       return response.data;
     }).catch(res=>{
       const response = res.response;
-      throw new HttpErrors.BadRequest(response.data);
+      throw new Error(response.data);
     });
   }
 
@@ -185,7 +181,7 @@ export class ConnectCube {
       return response.data;
     }).catch(res=>{
       const response = res.response;
-      throw new HttpErrors.BadRequest(response.data);
+      throw new Error(response.data);
     });
   }
 }
