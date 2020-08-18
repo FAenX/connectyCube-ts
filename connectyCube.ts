@@ -1,8 +1,12 @@
+/* eslint-disable camelcase */
+import {bind, /* inject, */ BindingScope} from '@loopback/core';
+// import ConnectyCube from 'connectycube';
 import axios from 'axios';
 import shortid from 'shortid';
 
 import crypto from 'crypto';
 import moment from 'moment';
+import {HttpErrors, param} from '@loopback/rest';
 import querystring from 'querystring';
 
 const SETTINGS_URL = 'https://api.connectycube.com/account_settings';
@@ -20,7 +24,29 @@ const endPoints = {
   login: 'login',
 };
 
-export class ConnectyCubeService {
+function paramsWithUser(message:any) {
+  const sessionMsg = Object.keys(message)
+    .map(function(val) {
+      if (typeof message[val] === 'object') {
+        return Object.keys(message[val])
+          .map(function(val1) {
+            return val + '[' + val1 + ']=' + message[val][val1];
+          })
+          .sort()
+          .join('&');
+      } else {
+        return val + '=' + message[val];
+      }
+    })
+    .sort()
+    .join('&');
+  return sessionMsg;
+}
+
+//
+
+@bind({scope: BindingScope.TRANSIENT})
+export class ConnectCube {
   constructor(/* Add @inject to inject parameters */) {}
 
   private async connectyCubeSettings() {
@@ -29,7 +55,7 @@ export class ConnectyCubeService {
     return res;
   }
 
-  private async apiEndpoint() {
+  private async apiEndpoint(user?: Login) {
     const endpoints = await this.connectyCubeSettings();
     const {data} = endpoints;
     const apiEndpoint = data.api_endpoint;
@@ -37,12 +63,12 @@ export class ConnectyCubeService {
   }
 
   // create user session
-  private async createSession() {
+  async createSession(user?: Login) {
     const apiEndpoint = await this.apiEndpoint();
     const timestamp = Math.floor(Date.now() / 1000);
     const nonce = shortid.generate();
 
-    const params = {
+    const params:any = {
       'application_id': CB_APP_ID,
       'auth_key': CB_AUTH,
       nonce,
@@ -50,32 +76,51 @@ export class ConnectyCubeService {
     };
 
     // hash signature
-    const signature = crypto.createHmac('sha1', CB_SECRET + '')
+    let signature = crypto.createHmac('sha1', CB_SECRET + '')
       .update(querystring.stringify(params))
       .digest('hex');
 
-    const data = JSON.stringify({
+    if (user) {
+      if (user.login && user.password) {
+        params.user = {login: user.login, password: user.password};
+      }
+
+      const paramsNew = paramsWithUser(params);
+      signature = crypto.createHmac('sha1', CB_SECRET + '')
+        .update(paramsNew)
+        .digest('hex');
+    }
+
+    let data = JSON.stringify({
       ...params,
       signature,
     });
 
-    // axios request
     const config = {headers: {
       'Content-Type': 'application/json',
-    },
-    };
+    }};
+
+    if (user) {
+      data = JSON.stringify({
+        ...params,
+        signature,
+        user,
+      });
+      // axios request
+    }
 
     const response = axios.post(
       `${apiEndpoint}/${endPoints.session}`,
       data,
       config,
     );
+    // console.log(await response);
     return await response.then(res=>{
       const response = res;
       return response.data;
     }).catch(res=>{
       const response = res.response;
-      throw new Error(response.data);
+      throw new HttpErrors.BadRequest(response.data);
     });
   }
 
@@ -111,7 +156,7 @@ export class ConnectyCubeService {
       return response.data;
     }).catch(res=>{
       const response = res.response;
-      throw new Error(response.data);
+      throw new HttpErrors.BadRequest(response.data);
     });
   }
 
@@ -140,7 +185,7 @@ export class ConnectyCubeService {
       return response.data;
     }).catch(res=>{
       const response = res.response;
-      throw new Error(response.data);
+      throw new HttpErrors.BadRequest(response.data);
     });
   }
 }
@@ -159,3 +204,4 @@ interface Login{
   login: string
   password: string
 }
+
