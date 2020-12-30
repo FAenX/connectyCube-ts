@@ -1,32 +1,34 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+/* eslint-disable camelcase */
 // import ConnectyCube from 'connectycube';
 import axios from 'axios';
+import crypto from 'crypto';
+import querystring from 'querystring';
 import shortid from 'shortid';
 
-import crypto from 'crypto';
-import moment from 'moment';
-import querystring from 'querystring';
 
 const SETTINGS_URL = 'https://api.connectycube.com/account_settings';
 
-const {
-  CB_KEY,
-  CB_AUTH,
-  CB_APP_ID,
-  CB_SECRET,
-} = process.env;
 
+/*
+endpoint names
+*/
 const endPoints = {
   users: 'users',
   session: 'session',
   login: 'login',
+  events: 'events',
 };
 
-function paramsWithUser(message:any) {
+function paramsWithUser(args: object) {
+
+  const message: any = {...args}
+
   const sessionMsg = Object.keys(message)
-    .map(function(val) {
+    .map((val) => {
       if (typeof message[val] === 'object') {
         return Object.keys(message[val])
-          .map(function(val1) {
+          .map(function (val1) {
             return val + '[' + val1 + ']=' + message[val][val1];
           })
           .sort()
@@ -42,16 +44,30 @@ function paramsWithUser(message:any) {
 
 //
 
-export class ConnectCube {
-  constructor(/* Add @inject to inject parameters */) {}
+export class ConnectyCube {
+  private CB_KEY: string // application key
+  private CB_AUTH: string // authentication key
+  private CB_APP_ID: string
+  private CB_SECRET: string
+  constructor(
+    CB_KEY: string, // application key
+    CB_AUTH: string, // authentication key
+    CB_APP_ID: string,
+    CB_SECRET: string,
+  ) {
+    this.CB_KEY = CB_KEY
+    this.CB_APP_ID = CB_APP_ID
+    this.CB_AUTH = CB_AUTH
+    this.CB_SECRET = CB_SECRET
+  }
 
   private async connectyCubeSettings() {
-    const config = {headers: {'CB-Account-Key': CB_KEY}};
+    const config = {headers: {'CB-Account-Key': this.CB_KEY}};
     const res = await axios.get(SETTINGS_URL, config);
     return res;
   }
 
-  private async apiEndpoint(user?: Login) {
+  private async apiEndpoint() {
     const endpoints = await this.connectyCubeSettings();
     const {data} = endpoints;
     const apiEndpoint = data.api_endpoint;
@@ -64,25 +80,27 @@ export class ConnectCube {
     const timestamp = Math.floor(Date.now() / 1000);
     const nonce = shortid.generate();
 
-    const params:any = {
-      'application_id': CB_APP_ID,
-      'auth_key': CB_AUTH,
+    const params = {
+      'application_id': this.CB_APP_ID,
+      'auth_key': this.CB_AUTH,
       nonce,
       timestamp,
     };
 
     // hash signature
-    let signature = crypto.createHmac('sha1', CB_SECRET + '')
+    let signature = crypto.createHmac('sha1', this.CB_SECRET)
       .update(querystring.stringify(params))
       .digest('hex');
 
     if (user) {
+      const newParams = {...params, user: {}}
       if (user.login && user.password) {
-        params.user = {login: user.login, password: user.password};
+        newParams.user = {login: user.login, password: user.password};
       }
 
-      const paramsNew = paramsWithUser(params);
-      signature = crypto.createHmac('sha1', CB_SECRET + '')
+      const paramsNew = paramsWithUser(newParams);
+
+      signature = crypto.createHmac('sha1', this.CB_SECRET)
         .update(paramsNew)
         .digest('hex');
     }
@@ -92,9 +110,11 @@ export class ConnectCube {
       signature,
     });
 
-    const config = {headers: {
-      'Content-Type': 'application/json',
-    }};
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    };
 
     if (user) {
       data = JSON.stringify({
@@ -111,17 +131,15 @@ export class ConnectCube {
       config,
     );
     // console.log(await response);
-    return await response.then(res=>{
-      const response = res;
-      return response.data;
-    }).catch(res=>{
-      const response = res.response;
-      throw new Error(response.data);
+    return response.then(res => {
+      return res.data;
+    }).catch(err => {
+      throw new Error(err.response.data);
     });
   }
 
   // signup users
-  async signup(user: User): Promise<any> {
+  async signup(user: User): Promise<unknown> {
     const res = await this.createSession();
     const {session} = res;
     const data = JSON.stringify({
@@ -135,7 +153,8 @@ export class ConnectCube {
         'phone': user.phone,
       },
     });
-    const config = {headers:
+    const config = {
+      headers:
       {
         'CB-Token': `${session.token}`,
         'Content-Type': 'application/json',
@@ -147,12 +166,10 @@ export class ConnectCube {
       data,
       config,
     );
-    return await response.then(res=>{
-      const response = res;
-      return response.data;
-    }).catch(res=>{
-      const response = res.response;
-      throw new Error(response.data);
+    return response.then(re => {
+      return re.data;
+    }).catch(err => {
+      throw new Error(err.response.data);
     });
   }
 
@@ -164,7 +181,8 @@ export class ConnectCube {
       'login': user.login,
       'password': user.password,
     });
-    const config = {headers:
+    const config = {
+      headers:
       {
         'CB-Token': `${session.token}`,
         'Content-Type': 'application/json',
@@ -176,28 +194,75 @@ export class ConnectCube {
       data,
       config,
     );
-    return await response.then(res=>{
-      const response = res;
-      return response.data;
-    }).catch(res=>{
-      const response = res.response;
-      throw new Error(response.data);
+    return response.then(re => {
+      return re.data;
+    }).catch(err => {
+      throw new Error(err.response.data);
+    });
+  }
+
+  /*
+    send push notifications
+  */
+  async sendPushNotification(userId: string, notification: string) {
+    const res = await this.createSession({
+      login: 'h1-workstation', password: 'password'
+    });
+    const {session} = res;
+    // api endpoint
+    const apiEndpoint = await this.apiEndpoint();
+
+    const config = {
+      headers:
+      {
+        'CB-Token': `${session.token}`,
+        'Content-Type': 'application/json',
+      },
+    };
+
+    const message = JSON.stringify({
+      'message': notification,
+    });
+    const payload = Buffer.from(message).toString('base64');
+
+    const data = {
+      'event': {
+        'notification_type': 'push',
+        'environment': 'development',
+        'user': {'ids': `${userId}`},
+        'message': `${payload}`,
+        // 'push_type': 'gcm',
+      },
+    };
+
+    console.log(message);
+
+    const response = axios.post(
+      `${apiEndpoint}/${endPoints.events}`,
+      data,
+      config,
+    );
+
+    // response
+    return response.then(re => {
+      return re.data;
+    }).catch(err => {
+      console.log(err.data);
     });
   }
 }
 
-interface User{
-    password: string,
-    login: string,
-    facebookId?: string,
-    twitterId?: string,
-    fullName?: string,
-    phone?: string,
-    email?: string
+interface User {
+  password: string,
+  login: string,
+  facebookId?: string,
+  twitterId?: string,
+  fullName?: string,
+  phone?: string,
+  email?: string
 }
 
-interface Login{
+interface Login {
   login: string
   password: string
 }
-
