@@ -2,9 +2,9 @@
 /* eslint-disable camelcase */
 // import ConnectyCube from 'connectycube';
 import axios from 'axios';
-import crypto from 'crypto';
-import querystring from 'querystring';
-import shortid from 'shortid';
+const crypto = require('crypto');
+const querystring = require('querystring');
+const shortid = require('shortid');
 
 
 const SETTINGS_URL = 'https://api.connectycube.com/account_settings';
@@ -139,38 +139,41 @@ export class ConnectyCube {
   }
 
   // signup users
-  async signup(user: User): Promise<unknown> {
-    const res = await this.createSession();
-    const {session} = res;
-    const data = JSON.stringify({
-      'user': {
-        'login': user.login,
-        'password': user.password,
-        'email': user.email,
-        'facebook_id': user.facebookId,
-        'twitter_id': user.twitterId,
-        'full_name': user.fullName,
-        'phone': user.phone,
-      },
-    });
-    const config = {
-      headers:
-      {
-        'CB-Token': `${session.token}`,
-        'Content-Type': 'application/json',
-      },
-    };
-    const apiEndpoint = await this.apiEndpoint();
-    const response = axios.post(
-      `${apiEndpoint}/${endPoints.users}`,
-      data,
-      config,
-    );
-    return response.then(re => {
-      return re.data;
-    }).catch(err => {
-      throw new Error(err.response.data);
-    });
+  async signup(user: User): Promise<ConnectyCubeUser> {
+    try{
+      const res = await this.createSession();
+      const {session} = res;
+      const data = JSON.stringify({
+        'user': {
+          'login': user.login,
+          'password': user.password,
+          'email': user.email,
+          'facebook_id': user.facebookId,
+          'twitter_id': user.twitterId,
+          'full_name': user.fullName,
+          'phone': user.phone,
+        },
+      });
+      const config = {
+        headers:
+        {
+          'CB-Token': `${session.token}`,
+          'Content-Type': 'application/json',
+        },
+      };
+      const apiEndpoint = await this.apiEndpoint();
+      const response = axios.post(
+        `${apiEndpoint}/${endPoints.users}`,
+        data,
+        config,
+      );
+      return response.then(re => {
+        return re.data;
+      }).catch(err => {
+        throw new Error(err.response.data);
+      });
+    }catch(e){throw new Error(e)}
+    
   }
 
   // login users
@@ -252,7 +255,7 @@ export class ConnectyCube {
   }
 }
 
-interface User {
+type User = {
   password: string,
   login: string,
   facebookId?: string,
@@ -262,7 +265,11 @@ interface User {
   email?: string
 }
 
-interface Login {
+type Login = {
   login: string
   password: string
+}
+
+type ConnectyCubeUser = {
+  user: {id: string}
 }
