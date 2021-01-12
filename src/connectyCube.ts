@@ -172,7 +172,7 @@ export class ConnectyCube {
       }).catch(err => {
         throw new Error(err.response.data);
       });
-    }catch(e){throw new Error(e)}
+    }catch(e){throw new Error(e.message)}
     
   }
 
