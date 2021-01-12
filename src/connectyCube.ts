@@ -162,17 +162,15 @@ export class ConnectyCube {
         },
       };
       const apiEndpoint = await this.apiEndpoint();
-      const response = axios.post(
+      const response = await axios.post(
         `${apiEndpoint}/${endPoints.users}`,
         data,
         config,
       );
-      return response.then(re => {
-        return re.data;
-      }).catch(err => {
-        throw new Error(err.response.data);
-      });
-    }catch(e){throw new Error(e.message)}
+      return response.data
+    }catch(e){
+      throw new Error(e.message)
+    }
     
   }
 
@@ -200,7 +198,7 @@ export class ConnectyCube {
     return response.then(re => {
       return re.data;
     }).catch(err => {
-      throw new Error(err.response.data);
+      throw new Error(err.message);
     });
   }
 
