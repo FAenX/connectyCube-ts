@@ -45,24 +45,24 @@ function paramsWithUser(args: object) {
 //
 
 export class ConnectyCube {
-  private CB_KEY: string // application key
-  private CB_AUTH: string // authentication key
-  private CB_APP_ID: string
-  private CB_SECRET: string
+  private CB_ACCOUNT_KEY: string // application key
+  private CB_AUTHORIZATION_KEY: string // authentication key
+  private CB_APPLICATION_ID: string
+  private CB_AUTHORIZATION_SECRET: string
   constructor(
-    CB_KEY: string, // application key
-    CB_AUTH: string, // authentication key
-    CB_APP_ID: string,
-    CB_SECRET: string,
+    CB_ACCOUNT_KEY: string, // application key
+    CB_AUTHORIZATION_KEY: string, // authentication key
+    CB_APPLICATION_ID: string,
+    CB_AUTHORIZATION_SECRET: string,
   ) {
-    this.CB_KEY = CB_KEY
-    this.CB_APP_ID = CB_APP_ID
-    this.CB_AUTH = CB_AUTH
-    this.CB_SECRET = CB_SECRET
+    this.CB_ACCOUNT_KEY = CB_ACCOUNT_KEY
+    this.CB_APPLICATION_ID = CB_APPLICATION_ID
+    this.CB_AUTHORIZATION_KEY = CB_AUTHORIZATION_KEY
+    this.CB_AUTHORIZATION_SECRET = CB_AUTHORIZATION_SECRET
   }
 
   private async connectyCubeSettings() {
-    const config = {headers: {'CB-Account-Key': this.CB_KEY}};
+    const config = {headers: {'CB-Account-Key': this.CB_ACCOUNT_KEY}};
     const res = await axios.get(SETTINGS_URL, config);
     return res;
   }
@@ -75,67 +75,69 @@ export class ConnectyCube {
   }
 
   // create user session
-  async createSession(user?: Login) {
-    const apiEndpoint = await this.apiEndpoint();
-    const timestamp = Math.floor(Date.now() / 1000);
-    const nonce = shortid.generate();
-
-    const params = {
-      'application_id': this.CB_APP_ID,
-      'auth_key': this.CB_AUTH,
-      nonce,
-      timestamp,
-    };
-
-    // hash signature
-    let signature = crypto.createHmac('sha1', this.CB_SECRET)
-      .update(querystring.stringify(params))
-      .digest('hex');
-
-    if (user) {
-      const newParams = {...params, user: {}}
-      if (user.login && user.password) {
-        newParams.user = {login: user.login, password: user.password};
-      }
-
-      const paramsNew = paramsWithUser(newParams);
-
-      signature = crypto.createHmac('sha1', this.CB_SECRET)
-        .update(paramsNew)
+  async createSession(user?: Login): Promise<any> {
+    try{
+      const apiEndpoint = await this.apiEndpoint();
+      const timestamp = Math.floor(Date.now() / 1000);
+      const nonce = shortid.generate();
+  
+      const params = {
+        'application_id': this.CB_APPLICATION_ID,
+        'auth_key': this.CB_AUTHORIZATION_KEY,
+        nonce,
+        timestamp,
+      };
+  
+      // hash signature
+      let signature = crypto.createHmac('sha1', this.CB_AUTHORIZATION_SECRET)
+        .update(querystring.stringify(params))
         .digest('hex');
-    }
-
-    let data = JSON.stringify({
-      ...params,
-      signature,
-    });
-
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
+  
+      if (user) {
+        const newParams = {...params, user: {}}
+        if (user.login && user.password) {
+          newParams.user = {login: user.login, password: user.password};
+        }
+  
+        const paramsNew = paramsWithUser(newParams);
+  
+        signature = crypto.createHmac('sha1', this.CB_AUTHORIZATION_SECRET)
+          .update(paramsNew)
+          .digest('hex');
       }
-    };
-
-    if (user) {
-      data = JSON.stringify({
+  
+      let data = JSON.stringify({
         ...params,
         signature,
-        user,
       });
-      // axios request
-    }
+  
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      };
+  
+      if (user) {
+        data = JSON.stringify({
+          ...params,
+          signature,
+          user,
+        });
+        // axios request
+      }
+  
+      const response = await axios.post(
+        `${apiEndpoint}/${endPoints.session}`,
+        data,
+        config,
+      );
 
-    const response = axios.post(
-      `${apiEndpoint}/${endPoints.session}`,
-      data,
-      config,
-    );
-    // console.log(await response);
-    return response.then(res => {
-      return res.data;
-    }).catch(err => {
-      throw new Error(err.response.data);
-    });
+      return response.data
+
+    }catch(e){
+      throw new Error(e.message)
+    }
+   
   }
 
   // signup users
@@ -162,12 +164,14 @@ export class ConnectyCube {
         },
       };
       const apiEndpoint = await this.apiEndpoint();
-      const response = await axios.post(
+    const response = await axios.post(
         `${apiEndpoint}/${endPoints.users}`,
         data,
         config,
       );
-      return response.data
+
+    return response.data
+
     }catch(e){
       throw new Error(e.message)
     }
@@ -175,9 +179,10 @@ export class ConnectyCube {
   }
 
   // login users
-  async login(user: Login) {
+  async login(user: Login): Promise<any> {
     try{
       const res = await this.createSession();
+
       const {session} = res;
       const data = JSON.stringify({
         'login': user.login,
@@ -191,16 +196,14 @@ export class ConnectyCube {
         },
       };
       const apiEndpoint = await this.apiEndpoint();
-      const response = axios.post(
+      const response = await axios.post(
         `${apiEndpoint}/${endPoints.login}`,
         data,
         config,
       );
-      return response.then(re => {
-        return re.data;
-      }).catch(err => {
-        throw new Error(err.message);
-      });
+
+      return response.data
+     
     }catch(e){
       throw new Error(e.message)
     }
@@ -210,7 +213,7 @@ export class ConnectyCube {
   /*
     send push notifications
   */
-  async sendPushNotification(userId: string, notification: string) {
+  async sendPushNotification(userId: string, notification: string): Promise<any> {
     try{
       
       const res = await this.createSession({
@@ -245,19 +248,18 @@ export class ConnectyCube {
   
       console.log(message);
   
-      const response = axios.post(
+    const response = await axios.post(
         `${apiEndpoint}/${endPoints.events}`,
         data,
         config,
       );
+
+      return response.data
   
-      // response
-      return response.then(re => {
-        return re.data;
-      }).catch(err => {
-        console.log(err.data);
-      });
-    }catch(e){throw new Error(e.message)}
+      
+    }catch(e){
+      throw new Error(e.message)
+    }
   
   }
 }
