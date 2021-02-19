@@ -176,80 +176,89 @@ export class ConnectyCube {
 
   // login users
   async login(user: Login) {
-    const res = await this.createSession();
-    const {session} = res;
-    const data = JSON.stringify({
-      'login': user.login,
-      'password': user.password,
-    });
-    const config = {
-      headers:
-      {
-        'CB-Token': `${session.token}`,
-        'Content-Type': 'application/json',
-      },
-    };
-    const apiEndpoint = await this.apiEndpoint();
-    const response = axios.post(
-      `${apiEndpoint}/${endPoints.login}`,
-      data,
-      config,
-    );
-    return response.then(re => {
-      return re.data;
-    }).catch(err => {
-      throw new Error(err.message);
-    });
+    try{
+      const res = await this.createSession();
+      const {session} = res;
+      const data = JSON.stringify({
+        'login': user.login,
+        'password': user.password,
+      });
+      const config = {
+        headers:
+        {
+          'CB-Token': `${session.token}`,
+          'Content-Type': 'application/json',
+        },
+      };
+      const apiEndpoint = await this.apiEndpoint();
+      const response = axios.post(
+        `${apiEndpoint}/${endPoints.login}`,
+        data,
+        config,
+      );
+      return response.then(re => {
+        return re.data;
+      }).catch(err => {
+        throw new Error(err.message);
+      });
+    }catch(e){
+      throw new Error(e.message)
+    }
+    
   }
 
   /*
     send push notifications
   */
   async sendPushNotification(userId: string, notification: string) {
-    const res = await this.createSession({
-      login: 'h1-workstation', password: 'password'
-    });
-    const {session} = res;
-    // api endpoint
-    const apiEndpoint = await this.apiEndpoint();
-
-    const config = {
-      headers:
-      {
-        'CB-Token': `${session.token}`,
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const message = JSON.stringify({
-      'message': notification,
-    });
-    const payload = Buffer.from(message).toString('base64');
-
-    const data = {
-      'event': {
-        'notification_type': 'push',
-        'environment': 'development',
-        'user': {'ids': `${userId}`},
-        'message': `${payload}`,
-        // 'push_type': 'gcm',
-      },
-    };
-
-    console.log(message);
-
-    const response = axios.post(
-      `${apiEndpoint}/${endPoints.events}`,
-      data,
-      config,
-    );
-
-    // response
-    return response.then(re => {
-      return re.data;
-    }).catch(err => {
-      console.log(err.data);
-    });
+    try{
+      
+      const res = await this.createSession({
+        login: 'h1-workstation', password: 'password'
+      });
+      const {session} = res;
+      // api endpoint
+      const apiEndpoint = await this.apiEndpoint();
+  
+      const config = {
+        headers:
+        {
+          'CB-Token': `${session.token}`,
+          'Content-Type': 'application/json',
+        },
+      };
+  
+      const message = JSON.stringify({
+        'message': notification,
+      });
+      const payload = Buffer.from(message).toString('base64');
+  
+      const data = {
+        'event': {
+          'notification_type': 'push',
+          'environment': 'development',
+          'user': {'ids': `${userId}`},
+          'message': `${payload}`,
+          // 'push_type': 'gcm',
+        },
+      };
+  
+      console.log(message);
+  
+      const response = axios.post(
+        `${apiEndpoint}/${endPoints.events}`,
+        data,
+        config,
+      );
+  
+      // response
+      return response.then(re => {
+        return re.data;
+      }).catch(err => {
+        console.log(err.data);
+      });
+    }catch(e){throw new Error(e.message)}
+  
   }
 }
 
