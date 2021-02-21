@@ -1,6 +1,6 @@
 {
   "name": "@coderafiki/connectycube-ts",
-  "version": "0.0.18",
+  "version": "0.0.22",
   "description": "connectyCube typescript wrapper",
   "main": "dist/index.js",
   "repository": {
@@ -15,6 +15,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.21.1",
+    "http-parser-js": "^0.5.3",
     "shortid": "^2.2.16"
   },
   "devDependencies": {

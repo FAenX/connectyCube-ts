@@ -44,7 +44,7 @@ function paramsWithUser(args: object) {
 
 //
 
-export class ConnectyCube {
+export default class ConnectyCube {
   private CB_ACCOUNT_KEY: string // application key
   private CB_AUTHORIZATION_KEY: string // authentication key
   private CB_APPLICATION_ID: string
@@ -126,26 +126,26 @@ export class ConnectyCube {
         // axios request
       }
   
-      const response = await axios.post(
+      return await axios.post(
         `${apiEndpoint}/${endPoints.session}`,
         data,
         config,
-      );
+      )
 
-      return response.data
 
     }catch(e){
-      throw new Error(e.message)
+      return e.response.data
     }
    
   }
 
   // signup users
-  async signup(user: User): Promise<ConnectyCubeUser> {
+  async signup(user: User): Promise<ConnectyCubeUser | Error> {
     try{
-      const res = await this.createSession();
+      const res = await this.createSession()
+
       const {session} = res;
-      const data = JSON.stringify({
+      const data = {
         'user': {
           'login': user.login,
           'password': user.password,
@@ -155,7 +155,7 @@ export class ConnectyCube {
           'full_name': user.fullName,
           'phone': user.phone,
         },
-      });
+      };
       const config = {
         headers:
         {
@@ -164,16 +164,15 @@ export class ConnectyCube {
         },
       };
       const apiEndpoint = await this.apiEndpoint();
-    const response = await axios.post(
+    
+      return await axios.post(
         `${apiEndpoint}/${endPoints.users}`,
         data,
         config,
-      );
-
-    return response.data
+      )
 
     }catch(e){
-      throw new Error(e.message)
+      return e.response.data
     }
     
   }
@@ -184,10 +183,10 @@ export class ConnectyCube {
       const res = await this.createSession();
 
       const {session} = res;
-      const data = JSON.stringify({
+      const data = {
         'login': user.login,
         'password': user.password,
-      });
+      };
       const config = {
         headers:
         {
@@ -196,16 +195,16 @@ export class ConnectyCube {
         },
       };
       const apiEndpoint = await this.apiEndpoint();
-      const response = await axios.post(
+      return await axios.post(
         `${apiEndpoint}/${endPoints.login}`,
         data,
         config,
-      );
+      )
 
-      return response.data
+      
      
     }catch(e){
-      throw new Error(e.message)
+      return e.response.data
     }
     
   }
@@ -248,17 +247,15 @@ export class ConnectyCube {
   
       console.log(message);
   
-    const response = await axios.post(
+    return await axios.post(
         `${apiEndpoint}/${endPoints.events}`,
         data,
         config,
-      );
-
-      return response.data
+      )
   
       
     }catch(e){
-      throw new Error(e.message)
+      return e.response.data
     }
   
   }
