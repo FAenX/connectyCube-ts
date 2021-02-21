@@ -44,7 +44,7 @@ function paramsWithUser(args: object) {
 
 //
 
-export default class ConnectyCube {
+export class ConnectyCube {
   private CB_ACCOUNT_KEY: string // application key
   private CB_AUTHORIZATION_KEY: string // authentication key
   private CB_APPLICATION_ID: string
@@ -140,11 +140,15 @@ export default class ConnectyCube {
   }
 
   // signup users
-  async signup(user: User): Promise<ConnectyCubeUser | Error> {
+  async signup(user: User): Promise<ConnectyCubeUser> {
     try{
       const res = await this.createSession()
 
-      const {session} = res;
+      if(res.error){
+        return res.error
+      }
+
+      const {session} = res.data;
       const data = {
         'user': {
           'login': user.login,

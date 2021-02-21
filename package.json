@@ -1,6 +1,6 @@
 {
   "name": "@coderafiki/connectycube-ts",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "description": "connectyCube typescript wrapper",
   "main": "dist/index.js",
   "repository": {
