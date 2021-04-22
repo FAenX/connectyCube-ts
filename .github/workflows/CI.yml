@@ -1,0 +1,21 @@
+name: Publish to npm
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: master
+
+      - uses: actions/setup-node@v1
+      - name: install and build
+        run: |
+          npm install
+          npm run build
+  
