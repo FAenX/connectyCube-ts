@@ -20,6 +20,7 @@ const {
 const connectyCube = new ConnectyCube(
     CB_KEY + '', CB_AUTH + '', CB_APP_ID + '', CB_SECRET + '')
 
+// signup
 connectyCube.signup({
       // login
       password: 'password',
@@ -27,6 +28,30 @@ connectyCube.signup({
       fullName: `fullname`,
       // phone: patient.mobileNumber,
       email: 'email',
+    });
+    
+    
+// login
+connectyCube.login({
+      // login
+      password: 'password',
+      login: 'login',
+    });
+   
+    
+// send push notification
+connectyCube.sendPushNotification({
+      // login
+      password: 'password',
+      login: 'login',
+      notification: 'string'
+    });
+    
+// create session
+connectyCube.createSession({
+      // login
+      password: 'password',
+      login: 'login',
     });
 
 ```
