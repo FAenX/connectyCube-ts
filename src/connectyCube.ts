@@ -1,10 +1,12 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-/* eslint-disable camelcase */
+
 // import ConnectyCube from 'connectycube';
 import axios from 'axios';
+import uuid from 'uuidv4'
+
 const crypto = require('crypto');
 const querystring = require('querystring');
 const shortid = require('shortid');
+
 
 
 const SETTINGS_URL = 'https://api.connectycube.com/account_settings';
@@ -219,11 +221,11 @@ export class ConnectyCube {
   /*
     send push notifications
   */
-  async sendPushNotification(userId: string, notification: string): Promise<any> {
+  async sendPushNotification(user: Login, notification: string): Promise<any> {
     try{
       
       const res = await this.createSession({
-        login: 'h1-workstation', password: 'password'
+        ...user
       });
       const {session} = res;
       // api endpoint
@@ -246,7 +248,7 @@ export class ConnectyCube {
         'event': {
           'notification_type': 'push',
           'environment': 'development',
-          'user': {'ids': `${userId}`},
+          'user': {'ids': `${uuid}`},
           'message': `${payload}`,
           // 'push_type': 'gcm',
         },

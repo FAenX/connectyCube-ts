@@ -11,12 +11,13 @@
     "build": "tsc"
   },
   "homepage": "https://github.com/FAenX/connectyCube-ts",
-  "author": "Emmanuel Kiprono <kipronofb@gmail.com>",
+  "author": "Emmanuel Kiprono <kipronofb@outlook.com>",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.21.1",
     "http-parser-js": "^0.5.3",
-    "shortid": "^2.2.16"
+    "shortid": "^2.2.16",
+    "uuidv4": "^6.2.7"
   },
   "devDependencies": {
     "@babel/cli": "^7.12.17",
