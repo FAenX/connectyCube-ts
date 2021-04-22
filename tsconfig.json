@@ -5,7 +5,20 @@
     "removeComments": true,
     "preserveConstEnums": true,
     "outDir": "dist",
-    "sourceMap": true
+    "sourceMap": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "strictNullChecks": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+
+
+    "lib": ["es2018", "esnext.asynciterable"],
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "target": "es2017",
+    "declaration": true,
+
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "**/*.spec.ts"]

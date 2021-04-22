@@ -134,7 +134,7 @@ export class ConnectyCube {
 
 
     }catch(e){
-      return e.response.data
+      return {errors: e.response.status}
     }
    
   }
@@ -144,8 +144,8 @@ export class ConnectyCube {
     try{
       const res = await this.createSession()
 
-      if(res.error){
-        return res.error
+      if(res.errors){
+        return res
       }
 
       const {session} = res.data;
@@ -185,8 +185,11 @@ export class ConnectyCube {
   async login(user: Login): Promise<any> {
     try{
       const res = await this.createSession();
+      if(res.errors){
+        return res
+      }
 
-      const {session} = res;
+      const {session} = res.data;
       const data = {
         'login': user.login,
         'password': user.password,
