@@ -4,22 +4,26 @@
 
 connectycube typescript wrapper
 
+// usage
+
 import {ConnectyCube} from '@coderafiki/connectycube-ts'
 
 
 const {
-  CB_KEY,
-  CB_AUTH,
-  CB_APP_ID,
-  CB_SECRET,
+  APPLICATION_KEY,
+  AUTHENTICATION_KEY,
+  APP_ID,
+  AUTHENTICATION_SECRET,
 } = process.env;
 
 
 
 
 const connectyCube = new ConnectyCube(
-    CB_KEY + '', CB_AUTH + '', CB_APP_ID + '', CB_SECRET + '')
+     APPLICATION_KEY, AUTHENTICATION_KEY, APP_ID, AUTHENTICATION_SECRET)
 
+
+// functions 
 // signup
 connectyCube.signup({
       // login
